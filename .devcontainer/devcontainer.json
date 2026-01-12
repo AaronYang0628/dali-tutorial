@@ -1,0 +1,56 @@
+{
+	"name": "DALI Learning Environment",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "..",
+		"args": {
+			"VARIANT": "3.11"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-python.debugpy",
+				"charliermarsh.ruff",
+				"ms-vscode.makefile-tools",
+				"Anthropic.claude",
+				"GitHub.copilot",
+				"ms-vscode.cpptools",
+				"ms-python.black-formatter",
+				"ms-vscode-remote.remote-containers"
+			],
+			"settings": {
+				"python.defaultInterpreterPath": "/usr/bin/python",
+				"python.linting.enabled": true,
+				"python.linting.pylintEnabled": true,
+				"python.formatting.provider": "black",
+				"editor.formatOnSave": true,
+				"editor.defaultFormatter": "ms-python.python",
+				"[python]": {
+					"editor.defaultFormatter": "ms-python.python",
+					"editor.formatOnSave": true,
+					"editor.formatOnSaveTimeout": 1500
+				},
+				"files.exclude": {
+					"**/__pycache__": true,
+					"**/*.pyc": true
+				}
+			}
+		}
+	},
+	"postCreateCommand": "bash .devcontainer/post-create.sh",
+	"remoteUser": "vscode",
+	"mounts": [
+		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,readonly"
+	],
+	"containerEnv": {
+		"CUDA_VISIBLE_DEVICES": "0"
+	},
+	"runArgs": [
+		"--gpus",
+		"all"
+	],
+	"description": "NVIDIA DALI学习环境 - 支持GPU计算，包含Claude Code插件"
+}
