@@ -1,5 +1,5 @@
 # 基于 NVIDIA CUDA 镜像，支持 GPU 计算
-FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+FROM m.daocloud.io/docker.io/nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 
 # 设置时区
 ENV DEBIAN_FRONTEND=noninteractive
@@ -32,7 +32,7 @@ RUN python -m pip install --upgrade pip setuptools wheel
 RUN pip install \
     nvidia-dali-cuda120 \
     jupyter \
-    jupyter-lab \
+    jupyterlab \
     numpy \
     pandas \
     matplotlib \
