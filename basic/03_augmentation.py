@@ -23,6 +23,7 @@ import nvidia.dali.types as types
 import nvidia.dali.math as math
 import numpy as np
 import os
+import glob
 from PIL import Image
 
 
@@ -54,13 +55,13 @@ def create_varied_images(output_dir="varied_images", num_images=20):
 
 
 @pipeline_def
-def random_crop_pipeline(data_dir):
+def random_crop_pipeline(file_list):
     """
     随机裁剪 Pipeline
 
     fn.random_resized_crop 是最常用的训练时数据增强
     """
-    images, labels = fn.readers.file(file_root=data_dir, random_shuffle=True)
+    images, labels = fn.readers.file(files=file_list, random_shuffle=True)
     images = fn.decoders.image(images, device="mixed", output_type=types.RGB)
 
     # fn.random_resized_crop: 随机大小和宽高比裁剪
@@ -78,13 +79,13 @@ def random_crop_pipeline(data_dir):
 
 
 @pipeline_def
-def color_augmentation_pipeline(data_dir):
+def color_augmentation_pipeline(file_list):
     """
     颜色增强 Pipeline
 
     包含亮度、对比度、饱和度、色调调整
     """
-    images, labels = fn.readers.file(file_root=data_dir, random_shuffle=True)
+    images, labels = fn.readers.file(files=file_list, random_shuffle=True)
     images = fn.decoders.image(images, device="mixed", output_type=types.RGB)
     images = fn.resize(images, size=224)
 
@@ -114,13 +115,13 @@ def color_augmentation_pipeline(data_dir):
 
 
 @pipeline_def
-def geometric_augmentation_pipeline(data_dir):
+def geometric_augmentation_pipeline(file_list):
     """
     几何增强 Pipeline
 
     包含旋转、翻转、仿射变换
     """
-    images, labels = fn.readers.file(file_root=data_dir, random_shuffle=True)
+    images, labels = fn.readers.file(files=file_list, random_shuffle=True)
     images = fn.decoders.image(images, device="mixed", output_type=types.RGB)
     images = fn.resize(images, size=256)
 
@@ -135,7 +136,7 @@ def geometric_augmentation_pipeline(data_dir):
     )
 
     # 中心裁剪到 224x224
-    images = fn.crop(images, crop=224, crop_pos_x=0.5, crop_pos_y=0.5)
+    images = fn.crop(images, crop=(224, 224), crop_pos_x=0.5, crop_pos_y=0.5)
 
     # fn.flip: 随机水平翻转
     # 使用 coin_flip 以 0.5 概率翻转
@@ -148,13 +149,13 @@ def geometric_augmentation_pipeline(data_dir):
 
 
 @pipeline_def
-def advanced_augmentation_pipeline(data_dir):
+def advanced_augmentation_pipeline(file_list):
     """
     高级增强 Pipeline
 
     组合多种增强技术，模拟真实训练场景
     """
-    images, labels = fn.readers.file(file_root=data_dir, random_shuffle=True)
+    images, labels = fn.readers.file(files=file_list, random_shuffle=True)
     images = fn.decoders.image(images, device="mixed", output_type=types.RGB)
 
     # Step 1: 随机裁剪和缩放
@@ -204,13 +205,6 @@ def advanced_augmentation_pipeline(data_dir):
     # Step 5: 转换为 float 并归一化
     images = fn.cast(images, dtype=types.FLOAT) / 255.0
 
-    images = fn.normalize(
-        images,
-        mean=[0.485, 0.456, 0.406],
-        stddev=[0.229, 0.224, 0.225],
-        axes=(2,)
-    )
-
     # Step 6: 转换为 CHW 格式
     images = fn.transpose(images, perm=[2, 0, 1])
 
@@ -224,9 +218,11 @@ def demo_random_crop():
     print("="*60)
 
     data_dir = create_varied_images(num_images=10)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    print(f"Found {len(file_list)} image files")
 
     pipe = random_crop_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=4,
         num_threads=2,
         device_id=0,
@@ -240,7 +236,7 @@ def demo_random_crop():
         images_batch = outputs[0]
 
         # 获取第一张图像的统计信息
-        img = images_batch.at(0)
+        img = np.array(images_batch.as_cpu()[0])
         print(f"  Iteration {i+1}: shape={img.shape}, "
               f"mean={np.mean(img):.1f}, std={np.std(img):.1f}")
 
@@ -252,9 +248,11 @@ def demo_color_augmentation():
     print("="*60)
 
     data_dir = create_varied_images(num_images=10)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    print(f"Found {len(file_list)} image files")
 
     pipe = color_augmentation_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=4,
         num_threads=2,
         device_id=0,
@@ -268,7 +266,7 @@ def demo_color_augmentation():
         outputs = pipe.run()
         images_batch = outputs[0]
 
-        img = images_batch.at(0)
+        img = np.array(images_batch.as_cpu()[0])
         # 按通道统计
         r_mean = np.mean(img[:, :, 0])
         g_mean = np.mean(img[:, :, 1])
@@ -284,9 +282,11 @@ def demo_geometric_augmentation():
     print("="*60)
 
     data_dir = create_varied_images(num_images=10)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    print(f"Found {len(file_list)} image files")
 
     pipe = geometric_augmentation_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=4,
         num_threads=2,
         device_id=0,
@@ -308,9 +308,11 @@ def demo_full_augmentation():
     print("="*60)
 
     data_dir = create_varied_images(num_images=20)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    print(f"Found {len(file_list)} image files")
 
     pipe = advanced_augmentation_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=8,
         num_threads=4,
         device_id=0,
@@ -339,9 +341,10 @@ def demo_full_augmentation():
 
     print(f"\n✓ Full augmentation pipeline")
     print(f"  - Output shape: {images_batch.shape()}")
-    print(f"  - Output dtype: {images_batch.dtype()}")
-    print(f"  - Output range: [{np.min(images_batch.at(0)):.3f}, "
-          f"{np.max(images_batch.at(0)):.3f}]")
+    print(f"  - Output dtype: {images_batch.dtype}")
+    img_sample = np.array(images_batch.as_cpu()[0])
+    print(f"  - Output range: [{np.min(img_sample):.3f}, "
+          f"{np.max(img_sample):.3f}]")
 
 
 def main():

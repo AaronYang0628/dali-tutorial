@@ -91,7 +91,7 @@ def simple_image_pipeline(file_list):
     # - output_type: 输出类型 (RGB 或 GRAY)
     images = fn.decoders.image(
         images,
-        device="gpu",
+        device="mixed",
         output_type=types.RGB
     )
 
@@ -139,6 +139,11 @@ def demo_simple_pipeline():
     outputs = pipe.run()
 
     # outputs 是一个列表，包含 Pipeline 返回的所有输出
+    # images 是文件在列表中的字节数
+    # labels 是文件在列表中的索引：
+    #   - image_000.jpg → label = 0
+    #   - image_001.jpg → label = 1
+    #   - image_002.jpg → label = 2
     images_batch, labels_batch = outputs
 
     print(f"\n✓ Pipeline executed successfully")

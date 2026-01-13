@@ -300,8 +300,8 @@ def main():
     print("="*60)
 
     # 运行演示
-    demo_decode_pipeline()
-    demo_augmentation_pipeline()
+    # demo_decode_pipeline()
+    # demo_augmentation_pipeline()
     demo_device_comparison()
 
     print("\n" + "="*60)
