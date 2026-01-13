@@ -61,7 +61,7 @@ def simple_pipeline(file_list):
     Returns:
         读取的文件内容
     """
-    # fn.readers.file: 从文件列表读取文件
+    # fn.readers.file: 从文件列表读取文件,只读取原始文件的字节数，没有解码成为图像
     # - files: 文件路径列表
     # - random_shuffle: 是否随机打乱
     images, labels = fn.readers.file(
@@ -91,7 +91,7 @@ def simple_image_pipeline(file_list):
     # - output_type: 输出类型 (RGB 或 GRAY)
     images = fn.decoders.image(
         images,
-        device="cpu",
+        device="gpu",
         output_type=types.RGB
     )
 
@@ -121,7 +121,7 @@ def demo_simple_pipeline():
     # - device_id: GPU 设备 ID
     pipe = simple_pipeline(
         file_list=file_list,
-        batch_size=2,
+        batch_size=3,
         num_threads=2,
         device_id=0
     )
@@ -135,13 +135,14 @@ def demo_simple_pipeline():
     print(f"  - Device ID: {pipe.device_id}")
 
     # 运行一次迭代
-    print(f"\nRunning pipeline iteration...")
+    print(f"\nRunning pipeline first iteration...")
     outputs = pipe.run()
 
     # outputs 是一个列表，包含 Pipeline 返回的所有输出
     images_batch, labels_batch = outputs
 
     print(f"\n✓ Pipeline executed successfully")
+    print("  - Index of iteration: 1")
     print(f"  - Number of outputs: {len(outputs)}")
     print(f"  - Images batch shape: {images_batch.shape()}")
     print(f"  - Labels batch shape: {labels_batch.shape()}")
