@@ -9,6 +9,7 @@ ENV TZ=Asia/Shanghai
 RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy && \
     apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
+    curl \
     && add-apt-repository ppa:deadsnakes/ppa -y && \
     apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
@@ -18,6 +19,12 @@ RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy && \
     git \
     wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (LTS) for Claude CLI
+RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy && \
+    curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set NVIDIA library paths
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}

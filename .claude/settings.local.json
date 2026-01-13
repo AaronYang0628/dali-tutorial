@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(podman system renumber:*)",
+      "Bash(podman ps:*)",
+      "Bash(podman container prune:*)",
+      "Bash(podman rm:*)",
+      "Bash(podman volume rm:*)",
+      "Bash(podman images:*)",
+      "Bash(sudo podman images:*)",
+      "Bash(podman info:*)",
+      "Bash(podman system:*)",
+      "Bash(echo:*)"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+# DALI Tutorial Requirements
+
+# Core dependencies (should already be in container)
+nvidia-dali-cuda120>=1.28.0
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Image processing
+Pillow>=9.0.0
+opencv-python>=4.6.0
+
+# Data handling
+numpy>=1.21.0
+pandas>=1.3.0
+
+# MinIO and object storage
+minio>=7.1.0
+
+# Utilities
+tqdm>=4.62.0
+matplotlib>=3.5.0
