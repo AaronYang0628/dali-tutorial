@@ -1,7 +1,6 @@
 # DALI Tutorial Requirements
 
 # Core dependencies (should already be in container)
-nvidia-dali-cuda120>=1.28.0
 torch>=2.0.0
 torchvision>=0.15.0
 

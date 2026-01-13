@@ -21,6 +21,7 @@ import nvidia.dali.fn as fn
 import nvidia.dali.types as types
 import numpy as np
 import os
+import glob
 
 
 def create_sample_data(output_dir="sample_data", num_images=10):
@@ -50,24 +51,22 @@ def create_sample_data(output_dir="sample_data", num_images=10):
 
 
 @pipeline_def
-def simple_pipeline(data_dir):
+def simple_pipeline(file_list):
     """
     最简单的 DALI Pipeline
 
     Args:
-        data_dir: 数据目录路径
+        file_list: 文件路径列表
 
     Returns:
-        读取的文件内容和标签
+        读取的文件内容
     """
-    # fn.readers.file: 从文件系统读取文件
+    # fn.readers.file: 从文件列表读取文件
     # - files: 文件路径列表
     # - random_shuffle: 是否随机打乱
-    # - name: 操作符名称（用于调试）
     images, labels = fn.readers.file(
-        file_root=data_dir,
-        random_shuffle=True,
-        name="Reader"
+        files=file_list,
+        random_shuffle=True
     )
 
     # 返回数据（此时还是原始字节）
@@ -75,7 +74,7 @@ def simple_pipeline(data_dir):
 
 
 @pipeline_def
-def simple_image_pipeline(data_dir):
+def simple_image_pipeline(file_list):
     """
     带图像解码的 Pipeline
 
@@ -83,7 +82,7 @@ def simple_image_pipeline(data_dir):
     """
     # 读取文件
     images, labels = fn.readers.file(
-        file_root=data_dir,
+        files=file_list,
         random_shuffle=True
     )
 
@@ -107,13 +106,21 @@ def demo_simple_pipeline():
 
     # 创建测试数据
     data_dir = create_sample_data(num_images=5)
+    
+    # 获取文件列表
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    if not file_list:
+        print("Error: No image files found!")
+        return
+    
+    print(f"Found {len(file_list)} image files")
 
     # 创建 Pipeline 实例
     # - batch_size: 每批次样本数
     # - num_threads: 数据加载线程数
     # - device_id: GPU 设备 ID
     pipe = simple_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=2,
         num_threads=2,
         device_id=0
@@ -152,9 +159,10 @@ def demo_multiple_iterations():
     print("="*60)
 
     data_dir = create_sample_data(num_images=8)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
 
     pipe = simple_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=3,
         num_threads=2,
         device_id=0
@@ -180,9 +188,10 @@ def demo_pipeline_reset():
     print("="*60)
 
     data_dir = create_sample_data(num_images=6)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
 
     pipe = simple_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=2,
         num_threads=2,
         device_id=0
