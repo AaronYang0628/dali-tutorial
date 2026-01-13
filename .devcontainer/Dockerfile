@@ -4,18 +4,19 @@ FROM m.daocloud.io/docker.io/nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 
-# Install minimal dependencies for DALI + OpenCV
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Add deadsnakes PPA for Python 3.11 and install base dependencies
+# Clear proxy settings to avoid connection issues during build
+RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-dev \
+    python3.11-distutils \
     python3-pip \
     git \
-    libjpeg-turbo8 \
-    libpng16-16 \
-    libtiff5 \
-    libopencv-core4.5d \
-    libopencv-imgproc4.5d \
-    libopencv-imgcodecs4.5d \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Set NVIDIA library paths
@@ -25,15 +26,18 @@ ENV PATH=${CUDA_HOME}/bin:${PATH}
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
-# Set Python as default version
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
+# Set Python 3.11 as default version
+RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
 # Upgrade pip
-RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy && \
+    python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install DALI and minimal packages for MCP development
-RUN pip install --no-cache-dir \
+RUN unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy && \
+    pip install --no-cache-dir \
     --extra-index-url https://pypi.nvidia.com \
     nvidia-dali-cuda120 \
     numpy \
