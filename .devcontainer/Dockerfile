@@ -1,59 +1,50 @@
-# 基于 NVIDIA CUDA 镜像，支持 GPU 计算
+# Use runtime image instead of devel to reduce size (4GB vs 10GB)
 FROM m.daocloud.io/docker.io/nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 
-# 设置时区
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 
-# 安装基础工具和 Python
-RUN apt-get update && apt-get install -y \
+# Install minimal dependencies for DALI + OpenCV
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-dev \
     python3-pip \
     git \
-    wget \
-    curl \
-    build-essential \
-    cmake \
-    libopencv-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libtiff-dev \
+    libjpeg-turbo8 \
+    libpng16-16 \
+    libtiff5 \
+    libopencv-core4.5d \
+    libopencv-imgproc4.5d \
+    libopencv-imgcodecs4.5d \
     && rm -rf /var/lib/apt/lists/*
 
-# 设置 Python 为默认版本
+# Set NVIDIA library paths
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# Set Python as default version
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
-# 升级 pip
-RUN python -m pip install --upgrade pip setuptools wheel
+# Upgrade pip
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安装 DALI 和相关依赖
-RUN pip install \
+# Install DALI and minimal packages for MCP development
+RUN pip install --no-cache-dir \
+    --extra-index-url https://pypi.nvidia.com \
     nvidia-dali-cuda120 \
-    jupyter \
-    jupyterlab \
     numpy \
-    pandas \
-    matplotlib \
-    opencv-python \
-    scikit-learn \
-    torch \
-    torchvision \
-    torchaudio \
-    black \
-    pylint \
-    ipython \
-    anthropic
+    ipython
 
-# 创建非 root 用户
-RUN useradd -m -s /bin/bash vscode
+# Create non-root user
+RUN useradd -m -s /bin/bash vscode && \
+    mkdir -p /workspace && \
+    chown -R vscode:vscode /workspace
 
-# 设置工作目录
 WORKDIR /workspace
-
-# 切换到 vscode 用户
 USER vscode
 
-# 默认命令
 CMD ["/bin/bash"]

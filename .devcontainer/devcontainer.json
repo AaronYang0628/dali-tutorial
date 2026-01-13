@@ -7,32 +7,20 @@
 			"VARIANT": "3.11"
 		}
 	},
+	"features": {
+		"ghcr.io/devcontainers/features/nvidia-cuda:1": {
+			"version": "12.1"
+		}
+	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance",
-				"ms-python.debugpy",
-				"charliermarsh.ruff",
-				"ms-vscode.makefile-tools",
-				"Anthropic.claude",
-				"GitHub.copilot",
-				"ms-vscode.cpptools",
-				"ms-python.black-formatter",
-				"ms-vscode-remote.remote-containers"
+				"ms-python.debugpy"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "/usr/bin/python",
-				"python.linting.enabled": true,
-				"python.linting.pylintEnabled": true,
-				"python.formatting.provider": "black",
-				"editor.formatOnSave": true,
-				"editor.defaultFormatter": "ms-python.python",
-				"[python]": {
-					"editor.defaultFormatter": "ms-python.python",
-					"editor.formatOnSave": true,
-					"editor.formatOnSaveTimeout": 1500
-				},
 				"files.exclude": {
 					"**/__pycache__": true,
 					"**/*.pyc": true
@@ -42,15 +30,26 @@
 	},
 	"postCreateCommand": "bash .devcontainer/post-create.sh",
 	"remoteUser": "vscode",
+	"runArgs": [
+		"--device=/dev/nvidiactl",
+		"--device=/dev/nvidia0",
+		"--device=/dev/nvidia-uvm",
+		"--device=/dev/nvidia-uvm-tools",
+		"--ipc=host",
+		"--ulimit", "memlock=-1",
+		"--ulimit", "stack=67108864",
+		"--env", "LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:/host/usr/lib/x86_64-linux-gnu"
+	],
 	"mounts": [
-		"type=bind,src=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,readonly"
+		"type=bind,src=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,readonly",
+		"type=bind,src=/usr/lib/x86_64-linux-gnu,target=/host/usr/lib/x86_64-linux-gnu,readonly",
+		"type=bind,src=/usr/bin/nvidia-smi,target=/usr/bin/nvidia-smi,readonly",
+		"type=bind,src=/usr/bin/nvidia-debugdump,target=/usr/bin/nvidia-debugdump,readonly"
 	],
 	"containerEnv": {
-		"CUDA_VISIBLE_DEVICES": "0"
+		"CUDA_VISIBLE_DEVICES": "0",
+		"NVIDIA_VISIBLE_DEVICES": "all",
+		"NVIDIA_DRIVER_CAPABILITIES": "compute,utility"
 	},
-	"runArgs": [
-		"--gpus",
-		"all"
-	],
-	"description": "NVIDIA DALI学习环境 - 支持GPU计算，包含Claude Code插件"
+	"description": "NVIDIA DALI MCP开发环境 - GPU支持的轻量级镜像"
 }
