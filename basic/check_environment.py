@@ -7,6 +7,7 @@
 
 import sys
 import platform
+import glob
 
 
 def print_section(title):
@@ -182,16 +183,19 @@ def run_simple_pipeline():
                 img = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8))
                 img.save(os.path.join(tmpdir, f"test_{i}.jpg"))
 
+            # 获取文件列表
+            file_list = sorted(glob.glob(os.path.join(tmpdir, "*.jpg")))
+
             # 定义简单 Pipeline
             @pipeline_def
-            def test_pipeline(data_dir):
-                images, labels = fn.readers.file(file_root=data_dir)
+            def test_pipeline(file_list):
+                images, labels = fn.readers.file(files=file_list)
                 images = fn.decoders.image(images, device="mixed")
                 images = fn.resize(images, size=64)
                 return images, labels
 
             # 构建和运行
-            pipe = test_pipeline(data_dir=tmpdir, batch_size=2, num_threads=1, device_id=0)
+            pipe = test_pipeline(file_list=file_list, batch_size=2, num_threads=1, device_id=0)
             pipe.build()
             outputs = pipe.run()
 
