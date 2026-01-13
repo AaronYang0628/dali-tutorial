@@ -10,7 +10,8 @@
       "Bash(sudo podman images:*)",
       "Bash(podman info:*)",
       "Bash(podman system:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(/usr/bin/python:*)"
     ]
   }
 }

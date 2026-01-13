@@ -22,6 +22,7 @@ import nvidia.dali.fn as fn
 import nvidia.dali.types as types
 import numpy as np
 import os
+import glob
 from PIL import Image
 
 
@@ -45,12 +46,12 @@ def create_sample_images(output_dir="sample_images", num_images=10):
 
 
 @pipeline_def
-def decode_and_resize_pipeline(data_dir, target_size=224):
+def decode_and_resize_pipeline(file_list, target_size=224):
     """
     基础图像处理 Pipeline：解码 → 缩放
 
     Args:
-        data_dir: 图像目录
+        file_list: 图像文件路径列表
         target_size: 目标大小
 
     Returns:
@@ -58,7 +59,7 @@ def decode_and_resize_pipeline(data_dir, target_size=224):
     """
     # 读取 JPEG 文件
     images, labels = fn.readers.file(
-        file_root=data_dir,
+        files=file_list,
         random_shuffle=True
     )
 
@@ -85,16 +86,16 @@ def decode_and_resize_pipeline(data_dir, target_size=224):
 
 
 @pipeline_def
-def augmentation_pipeline(data_dir, target_size=224):
+def augmentation_pipeline(file_list, target_size=224):
     """
     包含多个增强操作的 Pipeline
 
     Args:
-        data_dir: 图像目录
+        file_list: 图像文件路径列表
         target_size: 目标大小
     """
     images, labels = fn.readers.file(
-        file_root=data_dir,
+        files=file_list,
         random_shuffle=True
     )
 
@@ -113,11 +114,11 @@ def augmentation_pipeline(data_dir, target_size=224):
     )
 
     # fn.crop: 中心裁剪
-    # - crop_h, crop_w: 裁剪大小，或 crop 统一指定
+    # - crop: 裁剪大小 (height, width)
     # - crop_pos_x, crop_pos_y: 裁剪位置 (0-1 范围内)
     images = fn.crop(
         images,
-        crop=target_size,
+        crop=(target_size, target_size),  # (height, width)
         crop_pos_x=0.5,  # 从中心开始
         crop_pos_y=0.5
     )
@@ -132,21 +133,14 @@ def augmentation_pipeline(data_dir, target_size=224):
     )
 
     # fn.cast: 数据类型转换
-    # 将 uint8 (0-255) 转换为 float32
+    # 将 uint8 (0-255) 转换为 float32 并归一化到 [0, 1]
     images = fn.cast(
         images,
         dtype=types.FLOAT
     )
 
-    # fn.normalize: 归一化
-    # - mean, stddev: 归一化参数
-    # - axes: 应用维度
-    images = fn.normalize(
-        images,
-        mean=[0.485, 0.456, 0.406],  # ImageNet 均值
-        stddev=[0.229, 0.224, 0.225],  # ImageNet 标准差
-        axes=(2,)  # 沿 RGB 通道维度
-    )
+    # 简单归一化：除以 255 将范围转到 [0, 1]
+    images = images / 255.0
 
     # fn.transpose: 数据转置
     # - perm: 维度排列 (0,1,2) -> (2,0,1) 从 HWC 转到 CHW
@@ -165,9 +159,11 @@ def demo_decode_pipeline():
     print("="*60)
 
     data_dir = create_sample_images(num_images=5)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    print(f"Found {len(file_list)} image files")
 
     pipe = decode_and_resize_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         target_size=224,
         batch_size=2,
         num_threads=2,
@@ -180,11 +176,13 @@ def demo_decode_pipeline():
 
     print(f"\n✓ Images decoded and resized")
     print(f"  - Output shape: {images_batch.shape()}")
-    print(f"  - Output dtype: {images_batch.dtype()}")
-    print(f"  - Output device: {images_batch.device}")
+    print(f"  - Output dtype: {images_batch.dtype}")
+    device_name = "GPU" if "GPU" in str(type(images_batch)) else "CPU"
+    print(f"  - Output device: {device_name}")
 
     # 获取第一张图像的统计信息
-    img = images_batch.at(0)
+    # 将 GPU tensor 转到 CPU 并转换为 numpy array
+    img = np.array(images_batch.as_cpu()[0])
     print(f"\nFirst image statistics:")
     print(f"  - Min value: {np.min(img)}")
     print(f"  - Max value: {np.max(img)}")
@@ -198,9 +196,11 @@ def demo_augmentation_pipeline():
     print("="*60)
 
     data_dir = create_sample_images(num_images=8)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    print(f"Found {len(file_list)} image files")
 
     pipe = augmentation_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         target_size=224,
         batch_size=4,
         num_threads=2,
@@ -213,11 +213,12 @@ def demo_augmentation_pipeline():
 
     print(f"\n✓ Images augmented and normalized")
     print(f"  - Output shape: {images_batch.shape()}")
-    print(f"  - Output dtype: {images_batch.dtype()}")
+    print(f"  - Output dtype: {images_batch.dtype}")
     print(f"  - Layout: CHW (Channel, Height, Width)")
 
     # 检查归一化结果
-    img = images_batch.at(0)
+    # 将 GPU tensor 转到 CPU 并转换为 numpy array
+    img = np.array(images_batch.as_cpu()[0])
     print(f"\nFirst image after normalization:")
     print(f"  - Min value: {np.min(img):.4f}")
     print(f"  - Max value: {np.max(img):.4f}")
@@ -233,19 +234,21 @@ def demo_device_comparison():
     import time
 
     data_dir = create_sample_images(num_images=100)
+    file_list = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
+    print(f"Found {len(file_list)} image files")
 
     # CPU 解码版本
     @pipeline_def
-    def cpu_decode_pipeline(data_dir):
-        images, labels = fn.readers.file(file_root=data_dir, random_shuffle=False)
+    def cpu_decode_pipeline(file_list):
+        images, labels = fn.readers.file(files=file_list, random_shuffle=False)
         images = fn.decoders.image(images, device="cpu", output_type=types.RGB)
         images = fn.resize(images, size=224)
         return images, labels
 
     # GPU 解码版本 (mixed device)
     @pipeline_def
-    def gpu_decode_pipeline(data_dir):
-        images, labels = fn.readers.file(file_root=data_dir, random_shuffle=False)
+    def gpu_decode_pipeline(file_list):
+        images, labels = fn.readers.file(files=file_list, random_shuffle=False)
         images = fn.decoders.image(images, device="mixed", output_type=types.RGB)
         images = fn.resize(images, size=224)
         return images, labels
@@ -256,7 +259,7 @@ def demo_device_comparison():
     # 测试 CPU 解码
     print(f"\nCPU decoding (batch_size={batch_size}):")
     pipe_cpu = cpu_decode_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=batch_size,
         num_threads=4,
         device_id=0
@@ -273,7 +276,7 @@ def demo_device_comparison():
     # 测试 GPU 解码
     print(f"\nGPU decoding (mixed device, batch_size={batch_size}):")
     pipe_gpu = gpu_decode_pipeline(
-        data_dir=data_dir,
+        file_list=file_list,
         batch_size=batch_size,
         num_threads=4,
         device_id=0
