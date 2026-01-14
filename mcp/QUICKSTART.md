@@ -71,7 +71,7 @@ import json
 async def main():
     server_params = StdioServerParameters(
         command="python",
-        args=["/workspaces/dali-tutorial/mcp/dali_mcp_server.py"]
+        args=["/workspaces/dali-tutorial/mcp/scripts/dali_mcp_server.py"]
     )
 
     async with stdio_client(server_params) as (read, write):
@@ -140,7 +140,7 @@ open ~/Library/Application\ Support/Claude/claude_desktop_config.json
     "dali-server": {
       "command": "python",
       "args": [
-        "/workspaces/dali-tutorial/mcp/dali_mcp_server.py"
+        "/workspaces/dali-tutorial/mcp/scripts/dali_mcp_server.py"
       ]
     }
   }

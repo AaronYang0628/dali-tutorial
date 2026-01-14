@@ -14,7 +14,18 @@
       "Bash(/usr/bin/python:*)",
       "Bash(python test_server.py:*)",
       "Bash(wc:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(docker build:*)",
+      "Bash(podman build:*)",
+      "Bash(timeout 3 python:*)",
+      "Bash(chmod:*)",
+      "Bash(python example_client.py:*)",
+      "Bash(tree:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(pkill:*)",
+      "Bash(ss:*)",
+      "Bash(netstat:*)"
     ]
   }
 }

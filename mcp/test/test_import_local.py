@@ -14,7 +14,7 @@ async def test_local_import():
 
     server_params = StdioServerParameters(
         command="python",
-        args=["/workspaces/dali-tutorial/mcp/dali_mcp_server.py"]
+        args=["/workspaces/dali-tutorial/mcp/scripts/dali_mcp_server.py"]
     )
 
     print("=" * 70)

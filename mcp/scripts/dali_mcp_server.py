@@ -16,6 +16,7 @@ import sys
 import json
 import glob
 import tempfile
+import logging
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
@@ -43,6 +44,19 @@ try:
 except ImportError:
     boto3 = None
     ClientError = None
+
+
+# ============================================================
+# Logging Configuration
+# ============================================================
+
+# Configure logging to stderr (stdout is used by MCP protocol)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stderr)]
+)
+logger = logging.getLogger("dali-mcp-server")
 
 
 # ============================================================
@@ -459,6 +473,9 @@ async def list_tools() -> list[Tool]:
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     """处理工具调用"""
 
+    logger.info(f"Tool called: {name}")
+    logger.debug(f"Arguments: {arguments}")
+
     try:
         if name == "create_test_dataset":
             return await handle_create_dataset(arguments)
@@ -481,6 +498,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             )]
 
     except Exception as e:
+        logger.error(f"Error in tool '{name}': {str(e)}", exc_info=True)
         return [TextContent(
             type="text",
             text=json.dumps({
@@ -926,12 +944,23 @@ async def handle_import_s3_dataset(arguments: Dict[str, Any]) -> list[TextConten
 
 async def main():
     """启动 MCP 服务器"""
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(
-            read_stream,
-            write_stream,
-            app.create_initialization_options()
-        )
+    logger.info("="*60)
+    logger.info("DALI MCP Server Starting...")
+    logger.info(f"DALI Version: {dali.__version__}")
+    logger.info(f"Python Version: {sys.version}")
+    logger.info("="*60)
+
+    try:
+        async with stdio_server() as (read_stream, write_stream):
+            logger.info("Server initialized, waiting for connections...")
+            await app.run(
+                read_stream,
+                write_stream,
+                app.create_initialization_options()
+            )
+    except Exception as e:
+        logger.error(f"Server error: {str(e)}", exc_info=True)
+        raise
 
 
 if __name__ == "__main__":
@@ -939,6 +968,12 @@ if __name__ == "__main__":
 
     try:
         asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Server interrupted by user")
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}", exc_info=True)
+        sys.exit(1)
     finally:
-        # 清理资源
+        logger.info("Cleaning up resources...")
         state.cleanup()
+        logger.info("DALI MCP Server stopped")

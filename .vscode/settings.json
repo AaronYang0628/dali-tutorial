@@ -1,4 +1,7 @@
 {
     "terminal.integrated.copyOnSelection": true,
-    "editor.selectionClipboard": true
+    "editor.selectionClipboard": true,
+    "python.analysis.extraPaths": [
+        "./mcp/scripts"
+    ]
 }

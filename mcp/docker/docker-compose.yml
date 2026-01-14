@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  dali-mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: dali-mcp-server:latest
+    container_name: dali-mcp-server
+
+    # GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    # Environment variables
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+
+    # Volumes
+    volumes:
+      # Mount local data directory if you need to access datasets
+      - ./datasets:/data:ro
+      # Persist temporary files
+      - dali-temp:/tmp/dali_datasets
+
+    # Network mode for MCP communication
+    network_mode: bridge
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Override command if needed
+    # command: ["python", "dali_mcp_server.py"]
+
+volumes:
+  dali-temp:
+    driver: local

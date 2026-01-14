@@ -6,6 +6,11 @@
 import subprocess
 import sys
 import time
+from pathlib import Path
+
+# 添加 scripts 目录到 sys.path
+scripts_dir = Path(__file__).parent.parent / "scripts"
+sys.path.insert(0, str(scripts_dir))
 
 
 def test_imports():

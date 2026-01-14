@@ -17,7 +17,7 @@ async def run_example():
     # 服务器参数
     server_params = StdioServerParameters(
         command="python",
-        args=["/workspaces/dali-tutorial/mcp/dali_mcp_server.py"],
+        args=["/workspaces/dali-tutorial/mcp/scripts/dali_mcp_server.py"],
         env=None
     )
 
