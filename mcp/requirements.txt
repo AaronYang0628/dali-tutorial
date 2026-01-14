@@ -1,0 +1,20 @@
+# DALI MCP Server Requirements
+
+# MCP SDK
+mcp>=1.0.0
+
+# NVIDIA DALI (choose one based on your CUDA version)
+nvidia-dali-cuda120>=1.50.0
+# nvidia-dali-cuda118>=1.50.0
+
+# Core dependencies
+numpy>=1.20.0
+pillow>=9.0.0
+
+# S3 and cloud storage support
+boto3>=1.26.0
+botocore>=1.29.0
+
+# Optional dependencies
+# torch>=2.0.0  # For PyTorch integration
+# opencv-python>=4.5.0  # For advanced image processing

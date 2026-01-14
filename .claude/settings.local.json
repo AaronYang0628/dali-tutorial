@@ -11,7 +11,10 @@
       "Bash(podman info:*)",
       "Bash(podman system:*)",
       "Bash(echo:*)",
-      "Bash(/usr/bin/python:*)"
+      "Bash(/usr/bin/python:*)",
+      "Bash(python test_server.py:*)",
+      "Bash(wc:*)",
+      "Bash(python3:*)"
     ]
   }
 }

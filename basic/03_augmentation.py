@@ -237,7 +237,7 @@ def demo_random_crop():
 
         # 获取第一张图像的统计信息
         img = np.array(images_batch.as_cpu()[0])
-        print(f"  Iteration {i+1}: shape={img.shape}, "
+        print(f" First Image In Iteration {i+1}: shape={img.shape}, "
               f"mean={np.mean(img):.1f}, std={np.std(img):.1f}")
 
 
@@ -355,9 +355,9 @@ def main():
 
     # 运行演示
     demo_random_crop()
-    demo_color_augmentation()
-    demo_geometric_augmentation()
-    demo_full_augmentation()
+    # demo_color_augmentation()
+    # demo_geometric_augmentation()
+    # demo_full_augmentation()
 
     print("\n" + "="*60)
     print("✓ Tutorial 03 completed!")

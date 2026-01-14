@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "dali-server": {
+      "command": "python",
+      "args": [
+        "/workspaces/dali-tutorial/mcp/dali_mcp_server.py"
+      ],
+      "env": {}
+    }
+  }
+}
