@@ -11,6 +11,14 @@
 			"https_proxy": ""
 		}
 	},
+	"forwardPorts": [8000],
+	"portsAttributes": {
+		"8000": {
+			"label": "HTTP Server",
+			"protocol": "http",
+			"onAutoForward": "notify"
+		}
+	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -30,6 +38,7 @@
 	"postCreateCommand": "bash .devcontainer/post-create.sh",
 	"remoteUser": "vscode",
 	"runArgs": [
+		"-p", "0.0.0.0:8000:8000", 
 		"--device=/dev/nvidiactl",
 		"--device=/dev/nvidia0",
 		"--device=/dev/nvidia-uvm",
