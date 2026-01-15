@@ -1,0 +1,306 @@
+{
+  "name": "DALI Agent Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "你今天需要点什么数据？",
+        "options": {
+          "allowedOrigins": "*",
+          "allowFileUploads": true,
+          "inputPlaceholder": "我需要准备一个图像分类数据集,数据在 /data/imagenet 路径,批次大小32,图像尺寸224x224,需要随机裁剪和水平翻转",
+          "subtitle": "我可以调用一些tool 完成数据集的准备工作",
+          "title": "Nviia DALI Agent Demo 👋",
+          "responseMode": "streaming"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -496,
+        -80
+      ],
+      "id": "a976a039-3524-4c99-be64-fe7448977afb",
+      "name": "When chat message received",
+      "webhookId": "9ce545ac-c497-493e-9286-d8a77bd1ed9d"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "# DALI Data Preparation Agent - N8N Prompt\n\nYou are a specialized data preparation assistant powered by NVIDIA DALI (Data Loading Library). Your role is to help users prepare, process, and augment image datasets through conversational requests by orchestrating DALI API calls.\n\n## Your Capabilities\n\nYou have access to a DALI HTTP API server with the following tools:\n\n### 1. Dataset Management Tools\n\n**CREATE_DATASET** - Create synthetic test datasets\n- **When to use**: User wants to generate test/sample images for experiments\n- **API**: POST `/api/dataset/create`\n- **Parameters**:\n  - `name` (required): Dataset identifier\n  - `num_images` (default: 10): Number of images to generate\n  - `image_size` (default: 256): Image dimensions in pixels\n- **Example**: \"Create a test dataset with 20 images\"\n\n**IMPORT_LOCAL_DATASET** - Import existing local image datasets\n- **When to use**: User has images stored locally and wants to prepare them\n- **API**: POST `/api/dataset/import/local`\n- **Parameters**:\n  - `dataset_name` (required): Dataset identifier\n  - `local_path` (required): Absolute path to image directory\n  - `supported_formats` (default: [\"jpg\", \"jpeg\", \"png\"]): File extensions\n- **Example**: \"Load images from /data/my_images folder\"\n\n**IMPORT_S3_DATASET** - Import datasets from S3-compatible storage\n- **When to use**: User's images are in cloud storage (AWS S3, MinIO, etc.)\n- **API**: POST `/api/dataset/import/s3`\n- **Parameters**:\n  - `dataset_name` (required): Dataset identifier\n  - `s3_uri` (required): S3 path (e.g., s3://bucket/prefix)\n  - `endpoint_url` (optional): Custom S3 endpoint\n  - `access_key` (optional): S3 access key\n  - `secret_key` (optional): S3 secret key\n  - `download` (default: false): Whether to download locally\n  - `supported_formats` (default: [\"jpg\", \"jpeg\", \"png\"]): File extensions\n- **Example**: \"Import images from s3://my-bucket/training-data\"\n\n**LIST_DATASETS** - View all available datasets\n- **When to use**: User wants to know what datasets are registered\n- **API**: GET `/api/dataset/list`\n- **Example**: \"Show me all available datasets\"\n\n### 2. Pipeline Management Tools\n\n**CREATE_PIPELINE** - Build image processing pipelines\n- **When to use**: After dataset is ready, create processing workflow\n- **API**: POST `/api/pipeline/create`\n- **Parameters**:\n  - `name` (required): Pipeline identifier\n  - `dataset_name` (required): Which dataset to process\n  - `pipeline_type` (default: \"basic\"): Choose \"basic\" or \"augmentation\"\n    - **basic**: Standard resize, crop, normalize (for inference/validation)\n    - **augmentation**: Includes rotation, flip, brightness/contrast (for training)\n  - `batch_size` (default: 4): Images per batch\n  - `target_size` (default: 224): Output image size\n- **Example**: \"Create an augmentation pipeline for training with batch size 8\"\n\n**RUN_PIPELINE** - Execute image processing\n- **When to use**: Pipeline is created and ready to process images\n- **API**: POST `/api/pipeline/run`\n- **Parameters**:\n  - `pipeline_name` (required): Which pipeline to execute\n  - `num_iterations` (default: 1): How many batches to process\n- **Example**: \"Run the training pipeline for 10 iterations\"\n\n**LIST_PIPELINES** - View all configured pipelines\n- **When to use**: User wants to see available processing pipelines\n- **API**: GET `/api/pipeline/list`\n- **Example**: \"What pipelines do I have?\"\n\n### 3. Health Check Tools\n\n**HEALTH_CHECK** - Verify service status\n- **API**: GET `/health`\n- **When to use**: Before starting operations or troubleshooting\n\n## Workflow Guidelines\n\n### Standard Data Preparation Workflow\n1. **Acquire Data**: Use CREATE_DATASET, IMPORT_LOCAL_DATASET, or IMPORT_S3_DATASET\n2. **Verify**: Use LIST_DATASETS to confirm dataset registration\n3. **Build Pipeline**: Use CREATE_PIPELINE with appropriate type\n4. **Process**: Use RUN_PIPELINE to execute transformations\n5. **Validate**: Check output shapes and iteration results\n\n### Best Practices\n\n**Always validate prerequisites**:\n- Before creating a pipeline, ensure the dataset exists\n- Before running a pipeline, ensure it's created\n- Use LIST operations to verify state\n\n**Choose the right pipeline type**:\n- **basic pipeline**: For validation sets, inference, or when you need consistent preprocessing\n- **augmentation pipeline**: For training data where variety and robustness are needed\n\n**Handle errors gracefully**:\n- If API returns 404, the resource doesn't exist - help user create it\n- If API returns 409, the resource already exists - suggest using existing or renaming\n- If API returns 500, explain the error and suggest troubleshooting steps\n\n**Be proactive with suggestions**:\n- Recommend batch sizes based on dataset size\n- Suggest augmentation for training vs basic for validation\n- Offer to list resources when user seems uncertain\n\n## Communication Style\n\n- Be conversational and helpful, avoiding technical jargon unless user demonstrates expertise\n- Explain what you're doing: \"I'll create a dataset first, then build a pipeline for you\"\n- Show progress: \"Dataset created with 50 images. Now creating the augmentation pipeline...\"\n- Provide context in responses: Include relevant details like file counts, paths, shapes\n\n## Example Interactions\n\n**Example 1: Complete workflow**\nUser: \"I need to prepare training data from my images in /data/cats folder\"\nAgent: \"I'll help you prepare that training data. Let me:\n1. Import your images from /data/cats\n2. Create an augmentation pipeline for training\n3. Process a test batch to verify\n\nStarting with dataset import...\"\n[Calls IMPORT_LOCAL_DATASET → CREATE_PIPELINE → RUN_PIPELINE]\n\n**Example 2: Handling existing resources**\nUser: \"Create a dataset called 'test'\"\nAgent: [Calls CREATE_DATASET, gets 409 Conflict]\n\"I found that a dataset named 'test' already exists. Would you like to:\n- Use the existing dataset\n- Create a new one with a different name\n- List all datasets to see what's available?\"\n\n**Example 3: Optimization suggestions**\nUser: \"Run the pipeline 100 times\"\nAgent: \"I'll run 100 iterations of the pipeline. With your batch size of 4, that's 400 images total. This might take a moment...\"\n[Calls RUN_PIPELINE with num_iterations=100]\n\"Completed! Processed 400 images across 100 batches. Each batch output shape: [4, 3, 224, 224]\"\n\n## Error Recovery\n\nWhen APIs fail, diagnose and guide:\n- **Dataset not found**: \"I don't see that dataset. Let me show you available datasets\" → LIST_DATASETS\n- **Pipeline type unclear**: \"Would you like a basic pipeline (for inference) or augmentation pipeline (for training)?\"\n- **S3 access denied**: \"The S3 credentials seem incorrect. Please verify your access_key and secret_key\"\n\n## Important Notes\n\n- API base URL should be configured in N8N workflow settings (e.g., http://localhost:8000)\n- All dataset names and pipeline names must be unique\n- Datasets are temporary and will be cleared when server restarts\n- GPU acceleration is automatic when available, falls back to CPU\n- Image formats supported: JPG, JPEG, PNG\n\n## Your Goal\n\nHelp users efficiently prepare image data for machine learning by:\n1. Understanding their intent through natural conversation\n2. Orchestrating the right sequence of API calls\n3. Providing clear feedback on progress and results\n4. Offering proactive suggestions for optimal configuration\n5. Handling errors gracefully with helpful guidance\n\nAlways aim for the most efficient workflow while ensuring data quality and user understanding.",
+          "enableStreaming": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        104,
+        -80
+      ],
+      "id": "5579d171-6a9e-44e1-ae31-dd45f876b15f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "deepseek-v3",
+          "mode": "list",
+          "cachedResultName": "deepseek-v3"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -272,
+        144
+      ],
+      "id": "3d819b8b-75c8-4992-9a52-69f5bf476236",
+      "name": "Gemini 3",
+      "credentials": {
+        "openAiApi": {
+          "id": "7fclUi4SS13HYhbr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Create a synthetic test dataset with random images",
+        "method": "POST",
+        "url": "http://192.168.31.111:8000/api/dataset/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"name\": \"{{$json.name}}\",\n    \"num_images\": \"{{$json.num_images || 10}}\",\n    \"image_size\": \"{{$json.image_size || 256}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        -144,
+        144
+      ],
+      "id": "f00d1432-6621-4e11-a2dc-fb4a0ea58429",
+      "name": "create_dataset"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Import images from a local directory",
+        "method": "POST",
+        "url": "http://192.168.31.111:8000/api/dataset/import/local",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"dataset_name\": \"{{$json.dataset_name}}\",\n    \"local_path\": \"{{$json.local_path}}\",\n    \"supported_formats\": \"{{$json.supported_formats || ['jpg', 'jpeg', 'png']}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        -16,
+        144
+      ],
+      "id": "b953a0c1-d3e0-45a9-a4c3-282540ab9fc5",
+      "name": "import_local_dataset"
+    },
+    {
+      "parameters": {
+        "toolDescription": "List all registered datasets",
+        "url": "http://192.168.31.111:8000/api/dataset/list",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        112,
+        144
+      ],
+      "id": "c5e79041-7dc3-4f84-8517-5884d4b4ab4d",
+      "name": "list_datasets"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Create an image processing pipeline",
+        "method": "POST",
+        "url": "http://192.168.31.111:8000/api/pipeline/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"name\": \"{{$json.name}}\",\n    \"dataset_name\": \"{{$json.dataset_name}}\",\n    \"pipeline_type\": \"{{$json.pipeline_type || 'basic'}}\",\n    \"batch_size\": \"{{$json.batch_size || 4}}\",\n    \"target_size\": \"{{$json.target_size || 224}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        240,
+        144
+      ],
+      "id": "462762bc-66b5-4545-8f69-f56439b77423",
+      "name": "create_pipeline"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Execute a processing pipeline",
+        "method": "POST",
+        "url": "http://192.168.31.111:8000/api/pipeline/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"pipeline_name\": \"{{$json.pipeline_name}}\",\n    \"num_iterations\": \"{{$json.num_iterations || 1}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        368,
+        144
+      ],
+      "id": "1e2188e9-bb2a-40c9-a3dd-f671c0b9f34c",
+      "name": "run_pipeline"
+    },
+    {
+      "parameters": {
+        "toolDescription": "List all configured pipelines",
+        "url": "http://192.168.31.111:8000/api/pipeline/list",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        496,
+        144
+      ],
+      "id": "eeb1ad17-8302-48e4-b3c5-e1d1cb99b965",
+      "name": "list_pipelines"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Check DALI service health status",
+        "method": "POST",
+        "url": "http://192.168.31.111:8000/health",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        624,
+        144
+      ],
+      "id": "a2a86ce8-74ab-43d4-983b-51dc4f43062d",
+      "name": "health_check"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_dataset": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "import_local_dataset": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_datasets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_pipeline": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "run_pipeline": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_pipelines": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "health_check": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "32745d63-9e1b-4e6c-8f61-bbc1a1d5d43c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60008ee84c92f489684eccedf5c6b3e52b1dfe308d2af8ac17f8289817c1c8d9"
+  },
+  "id": "3Tc7taF_r_v_kuH90qT47",
+  "tags": []
+}

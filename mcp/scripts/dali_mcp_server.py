@@ -473,32 +473,37 @@ async def list_tools() -> list[Tool]:
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     """处理工具调用"""
 
-    logger.info(f"Tool called: {name}")
-    logger.debug(f"Arguments: {arguments}")
+    logger.info("="*60)
+    logger.info(f"Incoming tool call: {name}")
+    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info("="*60)
 
     try:
         if name == "create_test_dataset":
-            return await handle_create_dataset(arguments)
+            result = await handle_create_dataset(arguments)
         elif name == "create_pipeline":
-            return await handle_create_pipeline(arguments)
+            result = await handle_create_pipeline(arguments)
         elif name == "run_pipeline":
-            return await handle_run_pipeline(arguments)
+            result = await handle_run_pipeline(arguments)
         elif name == "list_datasets":
-            return await handle_list_datasets(arguments)
+            result = await handle_list_datasets(arguments)
         elif name == "list_pipelines":
-            return await handle_list_pipelines(arguments)
+            result = await handle_list_pipelines(arguments)
         elif name == "import_local_dataset":
-            return await handle_import_local_dataset(arguments)
+            result = await handle_import_local_dataset(arguments)
         elif name == "import_s3_dataset":
-            return await handle_import_s3_dataset(arguments)
+            result = await handle_import_s3_dataset(arguments)
         else:
-            return [TextContent(
+            result = [TextContent(
                 type="text",
                 text=json.dumps({"error": f"Unknown tool: {name}"}, indent=2)
             )]
 
+        logger.info(f"✓ Tool '{name}' completed successfully")
+        return result
+
     except Exception as e:
-        logger.error(f"Error in tool '{name}': {str(e)}", exc_info=True)
+        logger.error(f"✗ Error in tool '{name}': {str(e)}", exc_info=True)
         return [TextContent(
             type="text",
             text=json.dumps({
@@ -949,10 +954,29 @@ async def main():
     logger.info(f"DALI Version: {dali.__version__}")
     logger.info(f"Python Version: {sys.version}")
     logger.info("="*60)
+    logger.info("")
+    logger.info("Transport Mode: STDIO (Standard Input/Output)")
+    logger.info("Communication: JSON-RPC over stdin/stdout")
+    logger.info("")
+    logger.info("This server does NOT use HTTP ports.")
+    logger.info("It communicates via stdio and should be started by an MCP client:")
+    logger.info("  - Claude Desktop (claude_desktop_config.json)")
+    logger.info("  - n8n (MCP Agent node)")
+    logger.info("  - Custom client using MCP SDK")
+    logger.info("")
+    logger.info("Configuration example for clients:")
+    logger.info('  "dali-server": {')
+    logger.info('    "command": "python",')
+    logger.info(f'    "args": ["{os.path.abspath(__file__)}"]')
+    logger.info('  }')
+    logger.info("="*60)
 
     try:
         async with stdio_server() as (read_stream, write_stream):
-            logger.info("Server initialized, waiting for connections...")
+            logger.info("✓ Server initialized successfully")
+            logger.info("✓ Listening on stdin/stdout for MCP protocol messages")
+            logger.info("✓ Ready to accept tool calls from MCP clients")
+            logger.info("")
             await app.run(
                 read_stream,
                 write_stream,

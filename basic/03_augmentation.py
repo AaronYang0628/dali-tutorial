@@ -354,10 +354,10 @@ def main():
     print("="*60)
 
     # 运行演示
-    demo_random_crop()
+    # demo_random_crop()
     # demo_color_augmentation()
     # demo_geometric_augmentation()
-    # demo_full_augmentation()
+    demo_full_augmentation()
 
     print("\n" + "="*60)
     print("✓ Tutorial 03 completed!")

@@ -21,10 +21,13 @@ You have access to a DALI HTTP API server with the following tools:
 - **When to use**: User has images stored locally and wants to prepare them
 - **API**: POST `/api/dataset/import/local`
 - **Parameters**:
-  - `dataset_name` (required): Dataset identifier
-  - `local_path` (required): Absolute path to image directory
+  - `dataset_name` (required): Dataset identifier. Extract from the path - use the last folder name (e.g., "/data/images" → dataset_name: "images")
+  - `local_path` (required): Absolute path to image directory. Use the full path provided by user (e.g., "/data/images")
   - `supported_formats` (default: ["jpg", "jpeg", "png"]): File extensions
-- **Example**: "Load images from /data/my_images folder"
+- **Example Input**: "Prepare training data from /data/images with augmentation"
+  - **Extract**: dataset_name: "images", local_path: "/data/images"
+- **Example Input**: "Load images from /data/my_images folder"
+  - **Extract**: dataset_name: "my_images", local_path: "/data/my_images"
 
 **IMPORT_S3_DATASET** - Import datasets from S3-compatible storage
 - **When to use**: User's images are in cloud storage (AWS S3, MinIO, etc.)
@@ -77,6 +80,42 @@ You have access to a DALI HTTP API server with the following tools:
 **HEALTH_CHECK** - Verify service status
 - **API**: GET `/health`
 - **When to use**: Before starting operations or troubleshooting
+
+## Parameter Extraction Guidelines
+
+**CRITICAL**: When calling tools, you MUST extract parameters from the user's natural language input. DO NOT leave parameters as [undefined].
+
+### How to Extract Parameters from User Input
+
+**For IMPORT_LOCAL_DATASET**:
+```
+User Input: "Prepare training data from /data/images with augmentation"
+Extract:
+  - dataset_name: "images" (last folder in path)
+  - local_path: "/data/images" (full path from input)
+
+User Input: "Load images from /workspace/my_dataset"
+Extract:
+  - dataset_name: "my_dataset"
+  - local_path: "/workspace/my_dataset"
+```
+
+**For CREATE_PIPELINE**:
+```
+User Input: "...with augmentation"
+Extract:
+  - pipeline_type: "augmentation"
+
+User Input: "...for inference" or no mention of augmentation
+Extract:
+  - pipeline_type: "basic"
+```
+
+**General Rules**:
+- Extract paths using patterns like "from X", "at X", "in X"
+- Extract dataset_name as the last folder name from the path
+- If path is not specified, ask the user
+- Default values: batch_size=4, target_size=224, supported_formats="jpg,jpeg,png"
 
 ## Workflow Guidelines
 

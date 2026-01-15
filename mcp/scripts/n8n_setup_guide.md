@@ -48,23 +48,23 @@ curl http://localhost:8000/health
    - Body (JSON):
      ```json
      {
-       "name": "={{$json.name}}",
-       "num_images": "={{$json.num_images || 10}}",
-       "image_size": "={{$json.image_size || 256}}"
+       "name": "{{$json.name}}",
+       "num_images": "{{$json.num_images || 10}}",
+       "image_size": "{{$json.image_size || 256}}"
      }
      ```
 
    **工具2: import_local_dataset**
    - Name: `import_local_dataset`
-   - Description: "Import images from a local directory"
+   - Description: "Import images from a local directory. Extract the dataset_name from the path (use the last folder name) and use the full path as local_path. For example, if path is '/data/images', set dataset_name to 'images' and local_path to '/data/images'."
    - Method: POST
    - URL: `http://localhost:8000/api/dataset/import/local`
    - Body (JSON):
      ```json
      {
-       "dataset_name": "={{$json.dataset_name}}",
-       "local_path": "={{$json.local_path}}",
-       "supported_formats": "={{$json.supported_formats || ['jpg', 'jpeg', 'png']}}"
+       "dataset_name": "{{$json.dataset_name}}",
+       "local_path": "{{$json.local_path}}",
+       "supported_formats": "{{$json.supported_formats || 'jpg,jpeg,png'}}"
      }
      ```
 
@@ -76,13 +76,13 @@ curl http://localhost:8000/health
    - Body (JSON):
      ```json
      {
-       "dataset_name": "={{$json.dataset_name}}",
-       "s3_uri": "={{$json.s3_uri}}",
-       "endpoint_url": "={{$json.endpoint_url}}",
-       "access_key": "={{$json.access_key}}",
-       "secret_key": "={{$json.secret_key}}",
-       "download": "={{$json.download || false}}",
-       "supported_formats": "={{$json.supported_formats || ['jpg', 'jpeg', 'png']}}"
+       "dataset_name": "{{$json.dataset_name}}",
+       "s3_uri": "{{$json.s3_uri}}",
+       "endpoint_url": "{{$json.endpoint_url}}",
+       "access_key": "{{$json.access_key}}",
+       "secret_key": "{{$json.secret_key}}",
+       "download": "{{$json.download || false}}",
+       "supported_formats": "{{$json.supported_formats || ['jpg', 'jpeg', 'png']}}"
      }
      ```
 
@@ -100,11 +100,11 @@ curl http://localhost:8000/health
    - Body (JSON):
      ```json
      {
-       "name": "={{$json.name}}",
-       "dataset_name": "={{$json.dataset_name}}",
-       "pipeline_type": "={{$json.pipeline_type || 'basic'}}",
-       "batch_size": "={{$json.batch_size || 4}}",
-       "target_size": "={{$json.target_size || 224}}"
+       "name": "{{$json.name}}",
+       "dataset_name": "{{$json.dataset_name}}",
+       "pipeline_type": "{{$json.pipeline_type || 'basic'}}",
+       "batch_size": "{{$json.batch_size || 4}}",
+       "target_size": "{{$json.target_size || 224}}"
      }
      ```
 
@@ -116,8 +116,8 @@ curl http://localhost:8000/health
    - Body (JSON):
      ```json
      {
-       "pipeline_name": "={{$json.pipeline_name}}",
-       "num_iterations": "={{$json.num_iterations || 1}}"
+       "pipeline_name": "{{$json.pipeline_name}}",
+       "num_iterations": "{{$json.num_iterations || 1}}"
      }
      ```
 
@@ -183,7 +183,7 @@ AWS_SECRET_ACCESS_KEY=your_secret_key
 AWS_S3_ENDPOINT=https://s3.amazonaws.com
 ```
 
-然后在HTTP请求节点中使用: `={{$env.DALI_API_BASE_URL}}/api/...`
+然后在HTTP请求节点中使用: `{{$env.DALI_API_BASE_URL}}/api/...`
 
 ## 高级配置
 
@@ -284,7 +284,7 @@ $context.set('last_pipeline', pipelineName);
     },
     {
       "parameters": {
-        "systemPrompt": "={{ $('Prompt').item.json.prompt }}",
+        "systemPrompt": "{{ $('Prompt').item.json.prompt }}",
         "tools": ["create_dataset", "import_local_dataset", "create_pipeline", "run_pipeline"]
       },
       "name": "AI Agent",

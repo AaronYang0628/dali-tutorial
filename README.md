@@ -85,11 +85,17 @@ python basic/10_minio_production_pipeline.py
 完成本教程后，你将能够：
 
 ✅ 理解 DALI 的核心概念和工作原理
+
 ✅ 构建高效的数据预处理 Pipeline
+
 ✅ 使用各种图像增强操作
+
 ✅ 将 DALI 与 PyTorch 集成
+
 ✅ 从对象存储（MinIO）读取数据
+
 ✅ 构建生产级数据流水线
+
 ✅ 优化数据加载性能（2-5x 提升）
 
 ## 项目结构
