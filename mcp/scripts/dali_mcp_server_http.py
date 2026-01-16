@@ -96,6 +96,22 @@ state = DALIServerState()
 
 
 # ============================================================
+# Helper Functions
+# ============================================================
+
+def get_unique_dataset_name(base_name: str) -> str:
+    """生成唯一的数据集名称，如果名称已存在则添加序号"""
+    if base_name not in state.datasets:
+        return base_name
+
+    counter = 1
+    while f"{base_name}_{counter}" in state.datasets:
+        counter += 1
+
+    return f"{base_name}_{counter}"
+
+
+# ============================================================
 # DALI Pipeline Definitions
 # ============================================================
 
@@ -300,6 +316,9 @@ async def handle_create_dataset(arguments: Dict[str, Any]) -> list[TextContent]:
     name = arguments["name"]
     num_images = arguments.get("num_images", 10)
     image_size = arguments.get("image_size", 256)
+
+    # 自动处理重名，生成唯一名称
+    name = get_unique_dataset_name(name)
 
     temp_dir = tempfile.mkdtemp(prefix=f"dali_dataset_{name}_")
     state.temp_dirs.append(temp_dir)
@@ -510,14 +529,9 @@ async def handle_import_local_dataset(arguments: Dict[str, Any]) -> list[TextCon
     local_path = arguments["local_path"]
     supported_formats = arguments.get("supported_formats", ["jpg", "jpeg", "png"])
 
-    if dataset_name in state.datasets:
-        return [TextContent(
-            type="text",
-            text=json.dumps({
-                "error": f"Dataset name '{dataset_name}' already exists",
-                "available_datasets": list(state.datasets.keys())
-            }, indent=2)
-        )]
+    # 自动处理重名，生成唯一名称
+    original_name = dataset_name
+    dataset_name = get_unique_dataset_name(dataset_name)
 
     if not os.path.isabs(local_path):
         return [TextContent(
