@@ -31,7 +31,7 @@ echo ""
 
 # Build the image
 echo "Building image..."
-${CONTAINER_CMD} build -t "${FULL_IMAGE_NAME}" .
+${CONTAINER_CMD} build -f Dockerfile -t "${FULL_IMAGE_NAME}" ..
 
 echo ""
 echo "=========================================="

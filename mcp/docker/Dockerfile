@@ -31,17 +31,17 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel
 WORKDIR /app
 
 # Copy requirements and install Python dependencies
-COPY ../scripts/requirements.txt .
+COPY scripts/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy server code
-COPY ../scripts/dali_mcp_server.py .
+COPY scripts/dali_mcp_server_http.py .
 
 # Create directory for temporary files
 RUN mkdir -p /tmp/dali_datasets
 
 # Set the entrypoint
-ENTRYPOINT ["python", "dali_mcp_server.py"]
+ENTRYPOINT ["python", "dali_mcp_server_http.py"]
 
 # Health check (optional)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

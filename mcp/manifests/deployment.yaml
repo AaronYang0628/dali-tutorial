@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dali-mcp-service
+  labels:
+    app: dali-mcp-service
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dali-mcp-service
+  template:
+    metadata:
+      labels:
+        app: dali-mcp-service
+        version: v1
+    spec:
+      containers:
+      - name: dali-mcp-service
+        image: harbor.zhejianglab.com/ayb-dev/dali-mcp-service:v20260121r1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        # CPU-only mode: DALI will fallback to CPU execution
+        - name: CUDA_VISIBLE_DEVICES
+          value: ""
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: tmp-datasets
+          mountPath: /tmp/dali_datasets
+      volumes:
+      - name: tmp-datasets
+        emptyDir: {}
+      # No GPU required - runs in CPU-only mode
+      # Note: DALI performance will be significantly reduced without GPU
