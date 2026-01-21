@@ -3,6 +3,11 @@
 # MCP SDK
 mcp>=1.0.0
 
+# NVIDIA DALI - GPU accelerated data loading library
+# For CUDA 12.x (use nvidia-dali-cuda110 for CUDA 11.x)
+--extra-index-url https://pypi.nvidia.com
+nvidia-dali-cuda120>=1.30.0
+
 # Core dependencies
 numpy>=1.20.0
 pillow>=9.0.0
@@ -11,10 +16,10 @@ pillow>=9.0.0
 boto3>=1.26.0
 botocore>=1.29.0
 
-# HTTP API Server dependencies
-fastapi>=0.104.0
+# HTTP/SSE Server dependencies (for dali_mcp_server_http.py)
+starlette>=0.27.0
 uvicorn[standard]>=0.24.0
-pydantic>=2.0.0
+sse-starlette>=1.6.0
 
 # Optional dependencies
 # torch>=2.0.0  # For PyTorch integration

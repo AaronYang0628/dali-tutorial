@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: dali-mcp-service
-        image: harbor.zhejianglab.com/ayb-dev/dali-mcp-service:v20260121r1
+        image: harbor.zhejianglab.com/ayb-dev/dali-mcp-service:v20260121r2
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
