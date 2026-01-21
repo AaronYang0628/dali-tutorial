@@ -1,11 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: dali-mcp-server
+  name: dali-mcp-service
   labels:
-    app: dali-mcp-server
+    app: dali-mcp-service
   annotations:
-    # Nginx ingress annotations
+    cert-manager.io/cluster-issuer: self-signed-ca-issuer
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     # SSE support - important for MCP Server-Sent Events
@@ -18,18 +18,17 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: dali-mcp.example.com  # 修改为你的域名
+  - host: dali.mcp.ay.dev
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: dali-mcp-server
+            name: dali-mcp-service
             port:
               number: 8000
-  # TLS configuration (optional, uncomment and configure if needed)
-  # tls:
-  # - hosts:
-  #   - dali-mcp.example.com
-  #   secretName: dali-mcp-tls
+  tls:
+  - hosts:
+    - dali.mcp.ay.dev
+    secretName: dali-mcp-tls

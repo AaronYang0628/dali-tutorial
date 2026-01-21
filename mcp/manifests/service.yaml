@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: dali-mcp-server
+  name: dali-mcp-service
   labels:
-    app: dali-mcp-server
+    app: dali-mcp-service
 spec:
   type: ClusterIP
   ports:
@@ -12,4 +12,4 @@ spec:
     targetPort: 8000
     protocol: TCP
   selector:
-    app: dali-mcp-server
+    app: dali-mcp-service
